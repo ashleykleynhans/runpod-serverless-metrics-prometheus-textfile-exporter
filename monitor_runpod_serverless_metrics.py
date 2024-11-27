@@ -64,7 +64,8 @@ def write_metrics_data(endpoint_name, tmp_output_file, endpoint, data):
         f.write('runpod_serverless_requests{endpoint="' + endpoint_name + '"} ' + str(metrics['requests']) + '\n')
         f.write('runpod_serverless_completed_requests{endpoint="' + endpoint_name + '"} ' + str(metrics['completed_requests']) + '\n')
         f.write('runpod_serverless_failed_requests{endpoint="' + endpoint_name + '"} ' + str(metrics['failed_requests']) + '\n')
-        f.write('runpod_serverless_time{endpoint="' + endpoint_name + '"} ' + str(metrics['time']) + '\n')
+        # This outputs the time in an invalid format and causes the metrics not to be scraped
+        #f.write('runpod_serverless_time{endpoint="' + endpoint_name + '"} ' + str(metrics['time']) + '\n')
         f.close()
 
 
