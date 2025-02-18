@@ -102,16 +102,15 @@ def is_metrics_stale(metrics: Dict[str, any]) -> bool:
     return time_diff > 3600
 
 
-def write_metrics_data(endpoint_name: str, output_file: str, data: Dict[str, Any]) -> None:
+def write_metrics_data(endpoint_name: str, tmp_output_file: str, data: Dict[str, Any]) -> None:
     """
     Write metrics data to a Prometheus-format file.
 
     Args:
         endpoint_name: Name of the RunPod endpoint
-        output_file: Path to the output file
+        tmp_output_file: Path to the temporary output file
         data: Dictionary containing metrics data
     """
-    tmp_output_file = f'{output_file}.$$'
     endpoint_data = data.get('data', [])
 
     if len(endpoint_data):
@@ -138,7 +137,6 @@ def write_metrics_data(endpoint_name: str, output_file: str, data: Dict[str, Any
             f.write('runpod_serverless_completed_requests{endpoint="' + endpoint_name + '"} ' + str(metrics['completed_requests']) + '\n')
             f.write('runpod_serverless_failed_requests{endpoint="' + endpoint_name + '"} ' + str(metrics['failed_requests']) + '\n')
             f.close()
-            os.rename(tmp_output_file, output_file)
 
 
 def get_runpod_serverless_metrics(config: Dict[str, Any]) -> None:
@@ -153,6 +151,7 @@ def get_runpod_serverless_metrics(config: Dict[str, Any]) -> None:
     """
     filename = 'runpod_serverless_metrics.prom'
     output_file = os.path.join(config['textfile_path'], filename)
+    tmp_output_file = f'{output_file}.$$'
 
     for endpoint in config['endpoints']:
         endpoint_name = endpoint['name']
@@ -161,9 +160,11 @@ def get_runpod_serverless_metrics(config: Dict[str, Any]) -> None:
         if r.status_code == 401:
             raise Exception(f'Authentication failed for {endpoint_name} endpoint, check your API key')
         elif r.status_code == 200:
-            write_metrics_data(endpoint_name, output_file, r.json())
+            write_metrics_data(endpoint_name, tmp_output_file, r.json())
         else:
             raise Exception(f'Unexpected status code from /health endpoint: {r.status_code}')
+
+    os.rename(tmp_output_file, output_file)
 
 
 if __name__ == '__main__':
